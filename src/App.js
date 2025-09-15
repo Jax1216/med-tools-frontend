@@ -1,24 +1,41 @@
-import logo from './logo.svg';
+import React from 'react';
+import { BrowserRouter as Router, Route, Switch, Redirect, useLocation } from 'react-router-dom';
+
+// Import Components
+import TopBar from './components/TopBar/TopBar';
+import Login from './components/Login/Login';
+import Patient from './components/Patient/Patient';
+import Practice from './components/Practice/Practice';
+
 import './App.css';
+
+// A component to conditionally render the TopBar
+const AppLayout = () => {
+  const location = useLocation();
+  const showTopBar = location.pathname !== '/login';
+
+  return (
+    <>
+      {showTopBar && <TopBar />}
+      <main className="app-content">
+        <Switch>
+          <Route path="/login" component={Login} />
+          <Route path="/patient" component={Patient} />
+          <Route path="/practice" component={Practice} />
+          {/* Redirect any unknown path to the login page */}
+          <Redirect from="/" to="/login" />
+        </Switch>
+      </main>
+    </>
+  );
+};
+
 
 function App() {
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+    <Router>
+      <AppLayout />
+    </Router>
   );
 }
 

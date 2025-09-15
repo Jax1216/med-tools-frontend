@@ -1,0 +1,56 @@
+.top-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 40px;
+    border-bottom: 2px solid #ddd;
+    background-color: #fff;
+}
+
+.logo img {
+    max-width: 200px;
+    height: auto;
+}
+
+.buttons {
+    display: flex;
+    gap: 30px;
+}
+
+.buttons a {
+    text-decoration: none;
+    background: none;
+    border: none;
+    font-size: 16px;
+    font-weight: 500;
+    cursor: pointer;
+    color: #6c757d; /* Muted color for inactive tab */
+    padding: 10px 0;
+    border-bottom: 2px solid transparent;
+    transition: color 0.3s ease, border-color 0.3s ease;
+}
+
+.buttons a:hover {
+    color: #343a40;
+}
+
+.buttons a.active-link {
+    color: #343a40; /* Dark color for active tab */
+    border-bottom: 2px solid #007bff;
+}
+
+.logout-button {
+    background-color: #e74c3c;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    transition: background-color 0.3s;
+}
+
+.logout-button:hover {
+    background-color: #c0392b;
+}

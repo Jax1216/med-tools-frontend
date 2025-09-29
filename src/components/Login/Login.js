@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useHistory } from 'react-router-dom';
 import authService from '../../services/authService';
+import logo from '../../assets/logo.png';
 import './Login.css';
 
 const Login = () => {
@@ -17,8 +18,8 @@ const Login = () => {
 
     authService.login(email, password).then(
       () => {
-        history.push('/practice'); // Redirect to a default page after login
-        window.location.reload(); // Optional: force a reload to update app state
+        history.push('/practice');
+        window.location.reload();
       },
       (error) => {
         const resMessage =
@@ -35,47 +36,86 @@ const Login = () => {
   };
 
   return (
-    <div className="login-container">
-      <h2>Login</h2>
-      <form onSubmit={handleLogin}>
-        <div className="form-group">
-          <label htmlFor="email">Email</label>
-          <input
-            id="email"
-            type="email"
-            className="form-control"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-          />
-        </div>
-        <div className="form-group">
-          <label htmlFor="password">Password</label>
-          <input
-            id="password"
-            type="password"
-            className="form-control"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-          />
-        </div>
-        <div className="form-group">
-          <button type="submit" className="login-button" disabled={loading}>
-            {loading && (
-              <span className="spinner-border spinner-border-sm"></span>
-            )}
-            <span>Login</span>
-          </button>
-        </div>
-        {message && (
-          <div className="form-group">
-            <div className="alert alert-danger" role="alert">
-              {message}
-            </div>
+    <div className="login-page">
+      <div className="login-container">
+        <div className="login-left">
+          <div className="login-logo">
+            <img src={logo} alt="Candidate Tools" />
           </div>
-        )}
-      </form>
+          <h2>Sign in</h2>
+          <p className="login-subtitle">to continue to MedTools</p>
+        </div>
+
+        <div className="login-right">
+          <form onSubmit={handleLogin}>
+            <div className="form-group">
+              <label htmlFor="email">Email or phone</label>
+              <input
+                id="email"
+                type="email"
+                className="form-control"
+                placeholder="Email or phone"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                autoComplete="email"
+                autoFocus
+              />
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="password">Password</label>
+              <input
+                id="password"
+                type="password"
+                className="form-control"
+                placeholder="Password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                autoComplete="current-password"
+              />
+            </div>
+
+            <div className="form-actions">
+              <a href="#" className="forgot-password" onClick={(e) => e.preventDefault()}>
+                Forgot password?
+              </a>
+            </div>
+
+            {message && (
+              <div className="alert-danger" role="alert">
+                {message}
+              </div>
+            )}
+
+            <div className="button-group">
+              <a href="#" className="create-account-link" onClick={(e) => e.preventDefault()}>
+                Create account
+              </a>
+              <button type="submit" className="login-button" disabled={loading}>
+                {loading && <span className="spinner-border"></span>}
+                <span>{loading ? 'Signing in...' : 'Sign in'}</span>
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <div className="login-footer">
+        <div className="language-selector">
+          <select defaultValue="en" aria-label="Select language">
+            <option value="en">English (United States)</option>
+            <option value="es">Español</option>
+            <option value="fr">Français</option>
+          </select>
+        </div>
+        <div className="footer-links">
+          <a href="#" onClick={(e) => e.preventDefault()}>Help</a>
+          <a href="#" onClick={(e) => e.preventDefault()}>Privacy</a>
+          <a href="#" onClick={(e) => e.preventDefault()}>Terms</a>
+        </div>
+      </div>
     </div>
   );
 };

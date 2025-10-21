@@ -1,6 +1,50 @@
-# Getting Started with Create React App
+# 🩺 MedTools — Patient & Practice Management Platform
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+MedTools is a full-stack web application designed to streamline medical data management for clinics and healthcare providers. It provides a secure, intuitive interface for managing patient records, tracking practice performance, and supporting day-to-day clinical operations.
+
+The system includes authenticated user access, role-based pages (Patient, Practice, and Profile views), and integrated backend services to store and retrieve medical data. Although some pages currently display mock data for layout and testing, full backend functionality is actively being developed and integrated.
+
+# 🚀 Current Features
+
+User Authentication — Secure login flow with future password recovery and registration support.
+
+Top Navigation Bar — Global navigation for quick access to Patient, Practice, and Profile sections.
+
+Patient Page — Displays patient information (currently with sample data). Backend integration in progress.
+
+Practice Page — Will support analytics and data visualization for clinic operations.
+
+Profile Page — Allows users to view and update their account information.
+
+Responsive UI — Built with React components and clean modular CSS.
+
+# 🛠️ Tech Stack
+
+Frontend: React, React Router, Jest (for testing)
+Backend: Node.js, Express (integration in progress)
+Database: MongoDB / MySQL (depending on backend setup)
+Version Control: Git & GitHub
+Project Management: Agile workflow with sprint reviews and code review guidelines
+
+# 📅 Development Status
+
+Backend endpoints and data models are currently being connected.
+
+One major page (e.g., Patient or Practice) will be fully functional by the next code review.
+
+Dummy data is used in non-finalized sections for UI demonstration and testing.
+
+Future sprints will focus on completing backend communication, validation, and deployment setup.
+
+# 👥 Team Roles
+
+Frontend Developers: UI implementation, routing, and integration with API endpoints
+
+Backend Developers: Building REST APIs and data persistence layers
+
+Quality Assurance / Product Owner: Managing testing, documentation, and form uploads for code reviews
+
+Mentor/Clinet : Gives feedback, and direction for project
 
 ## Available Scripts
 

@@ -63,6 +63,10 @@ const TopBar = () => {
         <NavLink to="/practice" activeClassName="active-link">
           PRACTICE
         </NavLink>
+         <NavLink to="/profile" activeClassName="active-link">
+          PROFILE
+        </NavLink>
+
       </nav>
 
       <div className="toolbar">

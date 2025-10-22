@@ -16,7 +16,6 @@ const Patient = () => {
   const handleFormChange = (e) => {
     const { name, value } = e.target;
 
-    // auto-upper Patient ID and strip spaces
     if (name === 'patientNumber') {
       const cleaned = value.toUpperCase().replace(/\s+/g, '');
       setPatientForm((p) => ({ ...p, patientNumber: cleaned }));
@@ -70,154 +69,219 @@ const Patient = () => {
 
   return (
     <div className="patient-page">
-      <header className="patient-header card">
-        <div className="patient-title">
-          <h1>Patient</h1>
-          <p className="muted">Enter name or ID, then drag biomarkers onto calendar weeks.</p>
-        </div>
-        <div className="patient-meta">
-          <div className="meta-chip">
-            Year
-            <select
-              aria-label="Select year"
-              value={selectedYear}
-              onChange={(e) => setSelectedYear(parseInt(e.target.value, 10))}
-            >
-              {years.map((y) => (
-                <option key={y} value={y}>{y}</option>
-              ))}
-            </select>
+      <div className="patient-container">
+        {/* Header */}
+        <header className="card patient-header">
+          <div>
+            <h1>Patient</h1>
+            <p className="patient-subtitle">
+              Search for a patient and drag biomarkers onto calendar weeks to record visits
+            </p>
           </div>
-        </div>
-      </header>
-
-      {/* Search (no date) */}
-      <section className="form-container card" aria-label="Patient search">
-        <form onSubmit={handleFormSubmit}>
-          <div className="input-row input-row--three">
-            <input
-              type="text"
-              name="firstName"
-              placeholder="First name"
-              value={patientForm.firstName}
-              onChange={handleFormChange}
-              autoComplete="given-name"
-            />
-            <input
-              type="text"
-              name="lastName"
-              placeholder="Last name"
-              value={patientForm.lastName}
-              onChange={handleFormChange}
-              autoComplete="family-name"
-            />
-            <input
-              type="text"
-              name="patientNumber"
-              placeholder="Patient ID (e.g., PD10001)"
-              value={patientForm.patientNumber}
-              onChange={handleFormChange}
-              inputMode="text"
-              pattern="^PD[0-9]{5,}$"
-              title="Format like PD10001"
-            />
+          <div className="patient-meta">
+            <div className="year-selector">
+              <label htmlFor="year-select">Year</label>
+              <select
+                id="year-select"
+                aria-label="Select year"
+                value={selectedYear}
+                onChange={(e) => setSelectedYear(parseInt(e.target.value, 10))}
+              >
+                {years.map((y) => (
+                  <option key={y} value={y}>{y}</option>
+                ))}
+              </select>
+            </div>
           </div>
-          <button type="submit" className="btn-primary">Search Patient</button>
-        </form>
-      </section>
+        </header>
 
-      {/* Palettes */}
-      <section className="palette-row">
-        <div className="card palette bp-panel" aria-label="Blood pressure palette">
-          <div className="panel-title">Blood Pressure</div>
-          <div className="bp-grid">
-            <div className="bp-panel-item-d"><span>Systolic</span></div>
-            <div
-              style={{ backgroundColor: 'var(--yellow)' }}
-              className="bp-panel-item-s"
-              draggable
-              onDragStart={(e) => onDragStart(e, 90, 'systolic')}
-              onDragEnd={onDragEnd}
-              title="< 90"
-            >&lt;90</div>
-            <div
-              style={{ backgroundColor: 'var(--bright-green)' }}
-              className="bp-panel-item-s"
-              draggable
-              onDragStart={(e) => onDragStart(e, 120, 'systolic')}
-              onDragEnd={onDragEnd}
-              title="< 120"
-            >&lt;120</div>
-          </div>
-        </div>
-
-        <div className="card palette bio-panel" aria-label="Biomarker palette">
-          <div className="panel-title">Biomarkers</div>
-          <div className="bio-grid">
-            <div className="bio-panel-item"><span>HBA-1C</span></div>
-            <div
-              style={{ backgroundColor: 'var(--light-yellow)' }}
-              className="bio-panel-item-h"
-              draggable
-              onDragStart={(e) => onDragStart(e, 3, 'hba1c')}
-              onDragEnd={onDragEnd}
-              title="A1C 3.0"
-            >3.0</div>
-          </div>
-        </div>
-      </section>
-
-      {/* Legend */}
-      <section className="legend card">
-        <div className="legend-item">
-          <span className="legend-swatch" style={{ background: 'var(--bright-green)' }} /> In-range
-        </div>
-        <div className="legend-item">
-          <span className="legend-swatch" style={{ background: 'var(--yellow)' }} /> Caution
-        </div>
-        <div className="legend-item">
-          <span className="legend-swatch" style={{ background: 'lightgray' }} /> Not recorded
-        </div>
-        {isDragging && <div className="drag-hint">Drop onto a week to record a visit</div>}
-      </section>
-
-      {/* Calendar */}
-      <section className="calendar card" aria-label="Patient year calendar">
-        <div className="grid-wrapper">
-          <div className="grid-container">
-            {patientYearData.months.map((month, monthIndex) => (
-              <div key={month.monthNumber} className="month-column">
-                <div className="month-cell">{getMonthName(month.monthNumber)}</div>
-                {month.weeks.map((week, weekIndex) => {
-                  const start = week.startDate;
-                  const label = `${start.getMonth() + 1}/${start.getDate()}`;
-                  return (
-                    <div
-                      key={weekIndex}
-                      className="week-cell"
-                      onDragEnter={onDragEnter}
-                      onDragLeave={onDragLeave}
-                      onDragOver={onDragOver}
-                      onDrop={(e) => { onDrop(e, monthIndex, weekIndex); onDragLeave(e); }}
-                      aria-label={`Week starting ${label}`}
-                    >
-                      <div className="week-date">{label}</div>
-                      <div className="bio-marker-row">
-                        <div className="bio-marker-cell">A1C: --</div>
-                        <div className="bio-marker-cell">MB: --</div>
-                        <div className="bio-marker-cell">G: --</div>
-                        <div className="bio-marker-cell">Sys: --</div>
-                        <div className="bio-marker-cell">Dia: --</div>
-                      </div>
-                      <div className="week-empty">No visits yet</div>
-                    </div>
-                  );
-                })}
+        {/* Search Form */}
+        <section className="card search-section" aria-label="Patient search">
+          <div className="card-content">
+            <form onSubmit={handleFormSubmit} className="search-form">
+              <div className="form-inputs">
+                <div className="input-group">
+                  <label htmlFor="firstName">First Name</label>
+                  <input
+                    id="firstName"
+                    type="text"
+                    name="firstName"
+                    placeholder="Enter first name"
+                    value={patientForm.firstName}
+                    onChange={handleFormChange}
+                    autoComplete="given-name"
+                  />
+                </div>
+                <div className="input-group">
+                  <label htmlFor="lastName">Last Name</label>
+                  <input
+                    id="lastName"
+                    type="text"
+                    name="lastName"
+                    placeholder="Enter last name"
+                    value={patientForm.lastName}
+                    onChange={handleFormChange}
+                    autoComplete="family-name"
+                  />
+                </div>
+                <div className="input-group">
+                  <label htmlFor="patientNumber">Patient ID</label>
+                  <input
+                    id="patientNumber"
+                    type="text"
+                    name="patientNumber"
+                    placeholder="e.g., PD10001"
+                    value={patientForm.patientNumber}
+                    onChange={handleFormChange}
+                    inputMode="text"
+                    pattern="^PD[0-9]{5,}$"
+                    title="Format: PD10001"
+                  />
+                </div>
               </div>
-            ))}
+              <button type="submit" className="btn-primary">
+                Search Patient
+              </button>
+            </form>
+          </div>
+        </section>
+
+        {/* Palettes */}
+        <div className="palettes-section">
+          <div className="palettes-grid">
+            {/* Blood Pressure Palette */}
+            <div className="palette-card" aria-label="Blood pressure palette">
+              <h2 className="palette-title">Blood Pressure</h2>
+              <div className="palette-grid bp-palette-grid">
+                <div className="palette-label">Systolic</div>
+                <div
+                  className="palette-item bp-caution"
+                  draggable
+                  onDragStart={(e) => onDragStart(e, 90, 'systolic')}
+                  onDragEnd={onDragEnd}
+                  title="Systolic < 90"
+                >
+                  &lt; 90
+                </div>
+                <div
+                  className="palette-item bp-normal"
+                  draggable
+                  onDragStart={(e) => onDragStart(e, 120, 'systolic')}
+                  onDragEnd={onDragEnd}
+                  title="Systolic < 120"
+                >
+                  &lt; 120
+                </div>
+              </div>
+            </div>
+
+            {/* Biomarkers Palette */}
+            <div className="palette-card" aria-label="Biomarker palette">
+              <h2 className="palette-title">Biomarkers</h2>
+              <div className="palette-grid bio-palette-grid">
+                <div className="palette-label">HbA1c</div>
+                <div
+                  className="palette-item bio-good"
+                  draggable
+                  onDragStart={(e) => onDragStart(e, 5.0, 'hba1c')}
+                  onDragEnd={onDragEnd}
+                  title="HbA1c 5.0%"
+                >
+                  5.0%
+                </div>
+                <div
+                  className="palette-item bio-warning"
+                  draggable
+                  onDragStart={(e) => onDragStart(e, 6.0, 'hba1c')}
+                  onDragEnd={onDragEnd}
+                  title="HbA1c 6.0%"
+                >
+                  6.0%
+                </div>
+                <div
+                  className="palette-item bio-high"
+                  draggable
+                  onDragStart={(e) => onDragStart(e, 7.5, 'hba1c')}
+                  onDragEnd={onDragEnd}
+                  title="HbA1c 7.5%"
+                >
+                  7.5%
+                </div>
+              </div>
+            </div>
           </div>
         </div>
-      </section>
+
+        {/* Legend */}
+        <section className="card legend-section" aria-label="Legend">
+          <div className="legend">
+            <div className="legend-item">
+              <span className="legend-swatch green" />
+              <span>Normal range</span>
+            </div>
+            <div className="legend-item">
+              <span className="legend-swatch yellow" />
+              <span>Caution</span>
+            </div>
+            <div className="legend-item">
+              <span className="legend-swatch red" />
+              <span>High risk</span>
+            </div>
+            <div className="legend-item">
+              <span className="legend-swatch gray" />
+              <span>Not recorded</span>
+            </div>
+            {isDragging && (
+              <div className="drag-hint">
+                Drop onto a week to record a visit
+              </div>
+            )}
+          </div>
+        </section>
+
+        {/* Calendar */}
+        <section className="calendar-section" aria-label="Patient year calendar">
+          <div className="calendar-wrapper">
+            <div className="calendar-grid">
+              {patientYearData.months.map((month, monthIndex) => (
+                <div key={month.monthNumber} className="month-column">
+                  <div className="month-header">
+                    {getMonthName(month.monthNumber)}
+                  </div>
+                  {month.weeks.map((week, weekIndex) => {
+                    const start = week.startDate;
+                    const label = `${start.getMonth() + 1}/${start.getDate()}`;
+                    return (
+                      <div
+                        key={weekIndex}
+                        className="week-cell"
+                        onDragEnter={onDragEnter}
+                        onDragLeave={onDragLeave}
+                        onDragOver={onDragOver}
+                        onDrop={(e) => {
+                          onDrop(e, monthIndex, weekIndex);
+                          onDragLeave(e);
+                        }}
+                        aria-label={`Week starting ${label}`}
+                      >
+                        <div className="week-date">{label}</div>
+                        <div className="biomarkers-row">
+                          <div className="biomarker-chip">A1C: --</div>
+                          <div className="biomarker-chip">Sys: --</div>
+                          <div className="biomarker-chip">Dia: --</div>
+                          <div className="biomarker-chip">Glu: --</div>
+                          <div className="biomarker-chip">BP: --</div>
+                        </div>
+                        <div className="week-empty">No visits recorded</div>
+                      </div>
+                    );
+                  })}
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      </div>
     </div>
   );
 };

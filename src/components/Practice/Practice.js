@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import './Practice.css';
-// import patientService from '../../services/patientService'; // wire later
 
 const Practice = () => {
   const searchModes = [
@@ -18,7 +17,6 @@ const Practice = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [patients, setPatients] = useState([]);
   const [expandedId, setExpandedId] = useState(null);
-
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
 
@@ -26,7 +24,6 @@ const Practice = () => {
   const totalPages = itemsPerPage > 0 ? Math.ceil(totalItems / itemsPerPage) : 0;
 
   useEffect(() => {
-    // Reset inputs when switching modes
     setFormData({ a1cMin: '', a1cMax: '', visitStart: '', visitEnd: '' });
     setCurrentPage(1);
     setPatients([]);
@@ -38,7 +35,6 @@ const Practice = () => {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  // --- MOCK DATA (replace when wiring API) ---
   const randomPhone = () =>
     `(${Math.floor(200 + Math.random()*700)}) ${Math.floor(200 + Math.random()*700)}-${String(Math.floor(Math.random()*9000)+1000).padStart(4,'0')}`;
 
@@ -62,7 +58,6 @@ const Practice = () => {
     }
     return mock;
   };
-  // -------------------------------------------
 
   const handleSearch = async (e) => {
     e.preventDefault();
@@ -70,7 +65,6 @@ const Practice = () => {
     setCurrentPage(1);
     setExpandedId(null);
 
-    // TODO: replace with real API
     setTimeout(() => {
       let results = generateMockPatients();
 
@@ -104,129 +98,209 @@ const Practice = () => {
 
   return (
     <div className="practice-page">
-      <header className="card practice-header">
-        <div>
-          <h1>Practice</h1>
-          <p className="muted">Find patients by A1C or last visit. Click <strong>Details</strong> to view more.</p>
-        </div>
-        <div className="mode-selector">
-          <label htmlFor="mode">Mode</label>
-          <select id="mode" value={currentMode} onChange={(e) => setCurrentMode(e.target.value)}>
-            {searchModes.map(m => <option key={m.value} value={m.value}>{m.display}</option>)}
-          </select>
-        </div>
-      </header>
-
-      <section className="card search-card" aria-label="Search patients">
-        <form onSubmit={handleSearch} className="search-form">
-          {currentMode === 'a1c' && (
-            <div className="form-row">
-              <div className="input-group">
-                <label htmlFor="a1cMin">Min A1C (%)</label>
-                <input type="number" id="a1cMin" name="a1cMin" step="0.1" min="0" max="20"
-                  value={formData.a1cMin} onChange={handleInputChange} />
-              </div>
-              <div className="input-group">
-                <label htmlFor="a1cMax">Max A1C (%)</label>
-                <input type="number" id="a1cMax" name="a1cMax" step="0.1" min="0" max="20"
-                  value={formData.a1cMax} onChange={handleInputChange} />
-              </div>
-            </div>
-          )}
-
-          {currentMode === 'visit' && (
-            <div className="form-row">
-              <div className="input-group">
-                <label htmlFor="visitStart">Visited on/after</label>
-                <input type="date" id="visitStart" name="visitStart"
-                  value={formData.visitStart} onChange={handleInputChange} />
-              </div>
-              <div className="input-group">
-                <label htmlFor="visitEnd">Visited on/before</label>
-                <input type="date" id="visitEnd" name="visitEnd"
-                  value={formData.visitEnd} onChange={handleInputChange} />
-              </div>
-            </div>
-          )}
-
-          <button type="submit" className="btn-primary" disabled={isLoading}>
-            {isLoading ? 'Searching…' : 'Search'}
-          </button>
-        </form>
-      </section>
-
-      {patients.length > 0 && (
-        <section className="card results-card">
-          <div className="results-header">
-            <h2>Results <span className="muted">({totalItems})</span></h2>
-            <div className="pagination-controls">
-              <span>Page {currentPage} of {totalPages || 1}</span>
-              <select
-                value={itemsPerPage}
-                onChange={(e) => { setItemsPerPage(Number(e.target.value)); setCurrentPage(1); }}
-              >
-                <option value="5">5 / page</option>
-                <option value="10">10 / page</option>
-                <option value="20">20 / page</option>
-              </select>
-            </div>
+      <div className="practice-container">
+        <header className="card practice-header">
+          <div>
+            <h1>Practice</h1>
+            <p className="practice-subtitle">
+              Search and manage patient records by A1C levels or visit dates
+            </p>
           </div>
+          <div className="mode-selector">
+            <label htmlFor="mode">Search mode</label>
+            <select 
+              id="mode" 
+              value={currentMode} 
+              onChange={(e) => setCurrentMode(e.target.value)}
+            >
+              {searchModes.map(m => (
+                <option key={m.value} value={m.value}>{m.display}</option>
+              ))}
+            </select>
+          </div>
+        </header>
 
-          <div className="list">
-            {paginated.map((p) => {
-              const lvl = levelForA1C(p.mostRecentA1C);
-              const isOpen = expandedId === p.id;
-              return (
-                <div key={p.id} className="row">
-                  <div className="row-main">
-                    <div className="name">
-                      {p.lastName}, {p.firstName}
-                    </div>
-                    <div className={`level-badge ${lvl.cls}`} title={`A1C ${p.mostRecentA1C}%`}>
-                      {lvl.label} · {p.mostRecentA1C}%
-                    </div>
+        <section className="card search-card" aria-label="Search patients">
+          <div className="card-content">
+            <form onSubmit={handleSearch} className="search-form">
+              {currentMode === 'a1c' && (
+                <div className="form-row">
+                  <div className="input-group">
+                    <label htmlFor="a1cMin">Minimum A1C (%)</label>
+                    <input 
+                      type="number" 
+                      id="a1cMin" 
+                      name="a1cMin" 
+                      step="0.1" 
+                      min="0" 
+                      max="20"
+                      placeholder="e.g., 5.0"
+                      value={formData.a1cMin} 
+                      onChange={handleInputChange} 
+                    />
                   </div>
-                  <div className="row-actions">
-                    <button
-                      className="btn-outline"
-                      onClick={() => setExpandedId(isOpen ? null : p.id)}
-                      aria-expanded={isOpen}
-                      aria-controls={`details-${p.id}`}
-                    >
-                      {isOpen ? 'Hide Details' : 'Details'}
-                    </button>
+                  <div className="input-group">
+                    <label htmlFor="a1cMax">Maximum A1C (%)</label>
+                    <input 
+                      type="number" 
+                      id="a1cMax" 
+                      name="a1cMax" 
+                      step="0.1" 
+                      min="0" 
+                      max="20"
+                      placeholder="e.g., 7.0"
+                      value={formData.a1cMax} 
+                      onChange={handleInputChange} 
+                    />
                   </div>
-
-                  {isOpen && (
-                    <div id={`details-${p.id}`} className="details">
-                      <div className="detail-grid">
-                        <div><span className="k">Patient ID</span><span className="v">{p.patientNumber}</span></div>
-                        <div><span className="k">Last Visit</span><span className="v">{new Date(p.lastVisitDate).toLocaleDateString()}</span></div>
-                        <div><span className="k">Phone</span><span className="v">{p.phone}</span></div>
-                        <div><span className="k">Email</span><span className="v">{p.email}</span></div>
-                        <div className="full"><span className="k">Address</span><span className="v">{p.address}</span></div>
-                      </div>
-                    </div>
-                  )}
                 </div>
-              );
-            })}
-          </div>
+              )}
 
-          <div className="pager">
-            <button onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1}>
-              Previous
-            </button>
-            <button onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages || totalPages === 0}>
-              Next
-            </button>
+              {currentMode === 'visit' && (
+                <div className="form-row">
+                  <div className="input-group">
+                    <label htmlFor="visitStart">Visit date from</label>
+                    <input 
+                      type="date" 
+                      id="visitStart" 
+                      name="visitStart"
+                      value={formData.visitStart} 
+                      onChange={handleInputChange} 
+                    />
+                  </div>
+                  <div className="input-group">
+                    <label htmlFor="visitEnd">Visit date to</label>
+                    <input 
+                      type="date" 
+                      id="visitEnd" 
+                      name="visitEnd"
+                      value={formData.visitEnd} 
+                      onChange={handleInputChange} 
+                    />
+                  </div>
+                </div>
+              )}
+
+              <button type="submit" className="btn-primary" disabled={isLoading}>
+                {isLoading ? 'Searching...' : 'Search'}
+              </button>
+            </form>
           </div>
         </section>
-      )}
 
-      {!isLoading && patients.length === 0 && (
-        <p className="muted center">No results yet—run a search to see patients.</p>
-      )}
+        {patients.length > 0 && (
+          <section className="card results-card">
+            <div className="card-content">
+              <div className="results-header">
+                <h2>
+                  Results <span className="results-count">({totalItems})</span>
+                </h2>
+                <div className="pagination-controls">
+                  <span>Page {currentPage} of {totalPages || 1}</span>
+                  <select
+                    value={itemsPerPage}
+                    onChange={(e) => { 
+                      setItemsPerPage(Number(e.target.value)); 
+                      setCurrentPage(1); 
+                    }}
+                  >
+                    <option value="5">5 per page</option>
+                    <option value="10">10 per page</option>
+                    <option value="20">20 per page</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="results-list">
+                {paginated.map((p) => {
+                  const lvl = levelForA1C(p.mostRecentA1C);
+                  const isOpen = expandedId === p.id;
+                  return (
+                    <div key={p.id} className="patient-row">
+                      <div className="patient-row-main">
+                        <div className="patient-info">
+                          <span className="patient-name">
+                            {p.lastName}, {p.firstName}
+                            <span className="patient-id">{p.patientNumber}</span>
+                          </span>
+                          <div className={`level-badge ${lvl.cls}`}>
+                            {lvl.label} · {p.mostRecentA1C}%
+                          </div>
+                        </div>
+                        <button
+                          className="btn-outline"
+                          onClick={() => setExpandedId(isOpen ? null : p.id)}
+                          aria-expanded={isOpen}
+                          aria-controls={`details-${p.id}`}
+                        >
+                          {isOpen ? 'Hide details' : 'Show details'}
+                        </button>
+                      </div>
+
+                      {isOpen && (
+                        <div id={`details-${p.id}`} className="patient-details">
+                          <div className="detail-grid">
+                            <div className="detail-item">
+                              <span className="detail-label">Patient ID</span>
+                              <span className="detail-value">{p.patientNumber}</span>
+                            </div>
+                            <div className="detail-item">
+                              <span className="detail-label">Last Visit</span>
+                              <span className="detail-value">
+                                {new Date(p.lastVisitDate).toLocaleDateString()}
+                              </span>
+                            </div>
+                            <div className="detail-item">
+                              <span className="detail-label">Phone</span>
+                              <span className="detail-value">{p.phone}</span>
+                            </div>
+                            <div className="detail-item">
+                              <span className="detail-label">Email</span>
+                              <span className="detail-value">{p.email}</span>
+                            </div>
+                            <div className="detail-item full">
+                              <span className="detail-label">Address</span>
+                              <span className="detail-value">{p.address}</span>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+
+              {totalPages > 1 && (
+                <div className="pagination">
+                  <button 
+                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))} 
+                    disabled={currentPage === 1}
+                  >
+                    Previous
+                  </button>
+                  <span className="pagination-info">
+                    Page {currentPage} of {totalPages}
+                  </span>
+                  <button 
+                    onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} 
+                    disabled={currentPage === totalPages}
+                  >
+                    Next
+                  </button>
+                </div>
+              )}
+            </div>
+          </section>
+        )}
+
+        {!isLoading && patients.length === 0 && (
+          <div className="card">
+            <div className="card-content empty-state">
+              <p>No results yet. Use the search form above to find patients.</p>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 };

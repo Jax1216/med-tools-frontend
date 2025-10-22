@@ -6,6 +6,7 @@ import TopBar from './components/TopBar/TopBar';
 import Login from './components/Login/Login';
 import Patient from './components/Patient/Patient';
 import Practice from './components/Practice/Practice';
+import Profile from './components/Profile/Profile';
 
 import './App.css';
 
@@ -22,6 +23,8 @@ const AppLayout = () => {
           <Route path="/login" component={Login} />
           <Route path="/patient" component={Patient} />
           <Route path="/practice" component={Practice} />
+          <Route path="/profile" component={Profile} />
+
           {/* Redirect any unknown path to the login page */}
           <Redirect from="/" to="/login" />
         </Switch>

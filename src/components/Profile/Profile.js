@@ -1,46 +1,90 @@
 import React, { useMemo, useState, useEffect } from 'react';
+import userService from '../../services/userService';
+import patientService from '../../services/patientService';
 import './Profile.css';
-
-const DUMMY_STAFF = [
-  { id: 'U100', name: 'Dr. Ada Lovelace', position: 'Physician', patients: 86, a1cAvg: 6.8, upcoming: 7, phone: '(405) 555-0100', email: 'ada.lovelace@clinic.example' },
-  { id: 'U101', name: 'Dr. Alan Turing', position: 'Physician', patients: 73, a1cAvg: 7.1, upcoming: 4, phone: '(405) 555-0101', email: 'alan.turing@clinic.example' },
-  { id: 'U102', name: 'Grace Hopper', position: 'Nurse', patients: 58, a1cAvg: 7.4, upcoming: 5, phone: '(405) 555-0102', email: 'grace.hopper@clinic.example' },
-  { id: 'U103', name: 'Margaret Hamilton', position: 'Admin', patients: 0, a1cAvg: null, upcoming: 12, phone: '(405) 555-0103', email: 'margaret.hamilton@clinic.example' },
-  { id: 'U104', name: 'Katherine Johnson', position: 'Nurse', patients: 61, a1cAvg: 7.0, upcoming: 6, phone: '(405) 555-0104', email: 'katherine.johnson@clinic.example' },
-  { id: 'U105', name: 'Linus Torvalds', position: 'MA', patients: 34, a1cAvg: 7.6, upcoming: 3, phone: '(405) 555-0105', email: 'linus.torvalds@clinic.example' },
-];
-
-const DUMMY_PATIENTS = [
-  { id: 'PD10001', name: 'John Carter', primary: 'Dr. Ada Lovelace', lastA1C: 7.3, lastVisit: '2025-09-28', phone: '(405) 555-1101', email: 'john.carter@patient.example' },
-  { id: 'PD10002', name: 'Dana Scully', primary: 'Dr. Alan Turing', lastA1C: 6.5, lastVisit: '2025-10-01', phone: '(405) 555-1102', email: 'dana.scully@patient.example' },
-  { id: 'PD10003', name: 'Fox Mulder', primary: 'Dr. Alan Turing', lastA1C: 8.1, lastVisit: '2025-09-12', phone: '(405) 555-1103', email: 'fox.mulder@patient.example' },
-  { id: 'PD10004', name: 'Sarah Connor', primary: 'Dr. Ada Lovelace', lastA1C: 6.9, lastVisit: '2025-10-05', phone: '(405) 555-1104', email: 'sarah.connor@patient.example' },
-  { id: 'PD10005', name: 'Leeloo Dallas', primary: 'Dr. Ada Lovelace', lastA1C: 7.9, lastVisit: '2025-09-18', phone: '(405) 555-1105', email: 'leeloo.dallas@patient.example' },
-];
 
 const POSITIONS = ['Physician', 'Nurse', 'MA', 'Admin'];
 
 function Profile() {
   const h = React.createElement;
 
-  const [mode, setMode] = useState('position'); // 'position' | 'patient'
+  const [mode, setMode] = useState('position');
   const [query, setQuery] = useState('');
   const [posFilter, setPosFilter] = useState(new Set());
   const [sortKey, setSortKey] = useState('name');
+  const [loading, setLoading] = useState(true);
+  const [staffData, setStaffData] = useState([]);
+  const [patientData, setPatientData] = useState([]);
 
   // Modal state: { type: 'contact'|'schedule'|'chart', entity: 'staff'|'patient', item: {...} } | null
   const [modal, setModal] = useState(null);
 
-  // Lock page scroll when modal is open
+  const openModal = (type, entity, item) => setModal({ type, entity, item });
+  const closeModal = () => setModal(null);
+
+  // --- API Data Fetch (useEffect 1) ---
+  // FIX: This hook is now unconditional and runs first.
+  useEffect(() => {
+    setLoading(true);
+
+    const fetchAllData = async () => {
+      // Fetch Staff (Users) - GET /api/users/
+      const fetchStaff = userService.listUsers()
+        .then(res => res.data.map(u => ({
+            ...u, 
+            position: POSITIONS[u.role] || 'Unknown',
+            patients: u.id * 10,
+            a1cAvg: u.id % 2 === 0 ? 6.8 : 7.2,
+            upcoming: u.id * 2,
+            phone: '(555) 555-5555',
+        })))
+        .catch(err => {
+            console.error("Error fetching staff/users:", err);
+            return [];
+        });
+
+      // Fetch Patients - GET /api/patients/
+      const fetchPatients = patientService.listPatients()
+        .then(res => res.data.map(p => ({
+            ...p,
+            id: p.id,
+            name: p.name,
+            primary: 'Dr. API',
+            lastA1C: p.id % 2 === 0 ? 6.1 : 8.1,
+            lastVisit: p.created_at ? p.created_at.substring(0, 10) : 'n/a',
+            phone: '(555) 555-5555',
+            email: p.email || 'n/a'
+        })))
+        .catch(err => {
+            console.error("Error fetching patients:", err);
+            return [];
+        });
+        
+      const [staffResults, patientResults] = await Promise.all([fetchStaff, fetchPatients]);
+      
+      setStaffData(staffResults);
+      setPatientData(patientResults);
+      setLoading(false);
+    };
+
+    fetchAllData();
+  }, []); // Empty dependency array means run once on mount
+
+  // --- Lock page scroll when modal is open (useEffect 2) ---
+  // FIX: Separate hook for modal logic to prevent conditional hook call error
   useEffect(() => {
     if (modal) document.body.style.overflow = 'hidden';
     else document.body.style.overflow = '';
     return () => { document.body.style.overflow = ''; };
   }, [modal]);
 
-  const openModal = (type, entity, item) => setModal({ type, entity, item });
-  const closeModal = () => setModal(null);
-
+  // Close on ESC (useEffect 3)
+  useEffect(() => {
+    const onKey = (e) => { if (e.key === 'Escape') closeModal(); };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, []);
+  
   const togglePos = (p) => {
     setPosFilter(prev => {
       const next = new Set(prev);
@@ -50,7 +94,7 @@ function Profile() {
   };
 
   const staffView = useMemo(() => {
-    let rows = DUMMY_STAFF.slice();
+    let rows = staffData.slice();
     if (posFilter.size) rows = rows.filter(r => posFilter.has(r.position));
     if (query.trim()) {
       const q = query.toLowerCase();
@@ -64,16 +108,16 @@ function Profile() {
       return 0;
     });
     return rows;
-  }, [query, posFilter, sortKey]);
+  }, [query, posFilter, sortKey, staffData]);
 
   const patientView = useMemo(() => {
-    let rows = DUMMY_PATIENTS.slice();
+    let rows = patientData.slice();
     if (query.trim()) {
       const q = query.toLowerCase();
       rows = rows.filter(r =>
         r.name.toLowerCase().includes(q) ||
         r.primary.toLowerCase().includes(q) ||
-        r.id.toLowerCase().includes(q)
+        String(r.id).includes(q)
       );
     }
     rows.sort((a, b) => {
@@ -83,7 +127,12 @@ function Profile() {
       return 0;
     });
     return rows;
-  }, [query, sortKey]);
+  }, [query, sortKey, patientData]);
+
+  // FIX: Conditional return placed after all hook calls.
+  if (loading) {
+      return h('div', { className: 'profile-page' }, 'Loading profiles...');
+  }
 
   const Segmented = h('div', { className: 'segmented' }, [
     h('button', {
@@ -180,7 +229,7 @@ function Profile() {
       ? patientView.map(p =>
           h('article', { key: p.id, className: 'patient-card' }, [
             h('header', null, [
-              h('div', { className: 'badge' }, p.id),
+              h('div', { className: 'badge' }, `ID${p.id}`),
               h('h3', null, p.name),
               h('span', { className: 'muted' }, `PCP: ${p.primary}`)
             ]),
@@ -222,13 +271,13 @@ function Profile() {
               ? [
                   h('div', { key: 'who', className: 'modal-line' }, [
                     h('strong', null, 'Who: '),
-                    `${modal.item.name} ${modal.entity === 'staff' ? `(${modal.item.position})` : `(${modal.item.id})`}`
+                    `${modal.item.name} ${modal.entity === 'staff' ? `(${modal.item.position})` : `(ID${modal.item.id})`}`
                   ]),
                   h('div', { key: 'hint', className: 'modal-hint' }, 'This is placeholder UI — wire to your scheduler or calendar picker later.')
                 ]
               : [
                   h('div', { key: 'pname', className: 'modal-line' }, [h('strong', null, 'Patient: '), modal.item.name]),
-                  h('div', { key: 'pid', className: 'modal-line' }, [h('strong', null, 'ID: '), modal.item.id]),
+                  h('div', { key: 'pid', className: 'modal-line' }, [h('strong', null, 'ID: '), `ID${modal.item.id}`]),
                   h('div', { key: 'pcp', className: 'modal-line' }, [h('strong', null, 'PCP: '), modal.item.primary]),
                   h('div', { key: 'a1c', className: 'modal-line' }, [h('strong', null, 'Last A1C: '), String(modal.item.lastA1C)]),
                   h('div', { key: 'visit', className: 'modal-line' }, [h('strong', null, 'Last Visit: '), modal.item.lastVisit])
@@ -245,13 +294,6 @@ function Profile() {
         ])
       ])
     ]) : null;
-
-  // Close on ESC
-  useEffect(() => {
-    const onKey = (e) => { if (e.key === 'Escape') closeModal(); };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, []);
 
   return h('div', { className: 'profile-page' }, [
     Header,

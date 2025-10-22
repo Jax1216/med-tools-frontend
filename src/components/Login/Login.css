@@ -107,6 +107,9 @@
     font-weight: 500;
     text-decoration: none;
     cursor: pointer;
+    background: none;
+    border: none;
+    padding: 0;
 }
 
 .forgot-password:hover {
@@ -133,17 +136,22 @@
 
 .button-group {
     display: flex;
-    justify-content: space-between;
+    justify-content: flex-end;
     align-items: center;
+    gap: 24px;
     margin-bottom: 0;
 }
 
+/* The element below is now a <button> for accessibility, ensuring link styles apply */
 .create-account-link {
     color: #1a73e8;
     font-size: 14px;
     font-weight: 500;
     text-decoration: none;
     cursor: pointer;
+    background: none;
+    border: none;
+    padding: 0;
 }
 
 .create-account-link:hover {

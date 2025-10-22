@@ -1,34 +1,38 @@
 import axios from 'axios';
-import authHeader from './authHeader'; // Helper to get the auth token
+import authHeader from './authHeader';
 
-const API_URL = 'http://localhost:3000/api/v1/patient';
+const API_URL = 'http://localhost:5000/api/patients'; 
 
-/**
- * Searches for patients based on query parameters.
- * @param {Object} params - The search criteria (e.g., { first_name: 'Bruce' }).
- * @returns {Promise} - The axios promise.
- */
-
-const searchPatients = (params) => {
-  return axios.get(`${API_URL}/search`, { 
+const listPatients = (params = {}) => {
+  return axios.get(`${API_URL}/`, { 
     headers: authHeader(), 
     params: params 
   });
 };
 
-/**
- * Retrieves a single patient by their ID.
- * @param {string} id - The patient's ID.
- * @returns {Promise} - The axios promise.
- */
+const getPatientById = (patientId) => {
+  return axios.get(`${API_URL}/${patientId}`, { headers: authHeader() });
+};
 
-const getPatientById = (id) => {
-  return axios.get(`${API_URL}/id/${id}`, { headers: authHeader() });
+const createPatient = (patientData) => {
+  return axios.post(`${API_URL}/`, patientData, { headers: authHeader() });
+};
+
+const updatePatient = (patientId, updateData) => {
+  return axios.put(`${API_URL}/${patientId}`, updateData, { headers: authHeader() });
+};
+
+const deletePatient = (patientId) => {
+  return axios.delete(`${API_URL}/${patientId}`, { headers: authHeader() });
 };
 
 const patientService = {
-  searchPatients,
+  listPatients, 
   getPatientById,
+  createPatient,
+  updatePatient,
+  deletePatient,
+  searchPatients: listPatients, 
 };
 
 export default patientService;

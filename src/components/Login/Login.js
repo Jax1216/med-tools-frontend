@@ -4,9 +4,16 @@ import authService from '../../services/authService';
 import logo from '../../assets/logo.png';
 import './Login.css';
 
+const LOGIN_STATE = {
+  USERNAME_PASSWORD: 'username_password',
+  AWAITING_MFA: 'awaiting_mfa',
+};
+
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [mfaCode, setMfaCode] = useState('');
+  const [loginState, setLoginState] = useState(LOGIN_STATE.USERNAME_PASSWORD);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
   const history = useHistory();
@@ -16,23 +23,111 @@ const Login = () => {
     setMessage('');
     setLoading(true);
 
-    authService.login(email, password).then(
-      () => {
-        history.push('/practice');
-        window.location.reload();
-      },
-      (error) => {
-        const resMessage =
-          (error.response &&
-            error.response.data &&
-            error.response.data.message) ||
-          error.message ||
-          error.toString();
+    if (loginState === LOGIN_STATE.USERNAME_PASSWORD) {
+      authService.login(email, password).then(
+        (response) => {
+          setLoading(false);
+          // With the bypass, this will immediately be 'password_ok_awaiting_mfa'
+          if (response.data.message === 'password_ok_awaiting_mfa') {
+            setLoginState(LOGIN_STATE.AWAITING_MFA);
+          } else {
+            setMessage('Unexpected login response.');
+          }
+        },
+        (error) => {
+          const resMessage =
+            (error.response &&
+              error.response.data &&
+              error.response.data.error) ||
+            error.message ||
+            error.toString();
 
-        setLoading(false);
-        setMessage(resMessage);
-      }
-    );
+          setLoading(false);
+          setMessage(resMessage);
+        }
+      );
+    } else if (loginState === LOGIN_STATE.AWAITING_MFA) {
+      authService.loginMFA(email, mfaCode).then(
+        () => {
+          // With the bypass, this resolves instantly and redirects
+          history.push('/practice');
+          window.location.reload();
+        },
+        (error) => {
+          const resMessage =
+            (error.response &&
+              error.response.data &&
+              error.response.data.error) ||
+            error.message ||
+            error.toString();
+
+          setLoading(false);
+          setMessage(resMessage);
+        }
+      );
+    }
+  };
+
+  const renderForm = () => {
+    if (loginState === LOGIN_STATE.USERNAME_PASSWORD) {
+      return (
+        <>
+          <div className="form-group">
+            <label htmlFor="email">Email or phone</label>
+            <input
+              id="email"
+              type="email"
+              className="form-control"
+              placeholder="Email or phone"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              autoComplete="email"
+              autoFocus
+              disabled={loading}
+            />
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="password">Password</label>
+            <input
+              id="password"
+              type="password"
+              className="form-control"
+              placeholder="Password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              autoComplete="current-password"
+              disabled={loading}
+            />
+          </div>
+        </>
+      );
+    } else if (loginState === LOGIN_STATE.AWAITING_MFA) {
+      return (
+        <>
+          <p className="login-subtitle" style={{marginBottom: '20px'}}>
+            MFA Required. Enter the TOTP code from your authenticator app.
+          </p>
+          <div className="form-group">
+            <label htmlFor="mfaCode">MFA Code</label>
+            <input
+              id="mfaCode"
+              type="text"
+              className="form-control"
+              placeholder="TOTP Code"
+              value={mfaCode}
+              onChange={(e) => setMfaCode(e.target.value)}
+              required
+              autoComplete="one-time-code"
+              autoFocus
+              disabled={loading}
+            />
+          </div>
+        </>
+      );
+    }
   };
 
   return (
@@ -42,45 +137,22 @@ const Login = () => {
           <div className="login-logo">
             <img src={logo} alt="Candidate Tools" />
           </div>
-          <h2>Sign in</h2>
+          <h2>{loginState === LOGIN_STATE.USERNAME_PASSWORD ? 'Sign in' : 'Verify MFA'}</h2>
           <p className="login-subtitle">to continue to MedTools</p>
         </div>
 
         <div className="login-right">
           <form onSubmit={handleLogin}>
-            <div className="form-group">
-              <label htmlFor="email">Email or phone</label>
-              <input
-                id="email"
-                type="email"
-                className="form-control"
-                placeholder="Email or phone"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                autoComplete="email"
-                autoFocus
-              />
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="password">Password</label>
-              <input
-                id="password"
-                type="password"
-                className="form-control"
-                placeholder="Password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                autoComplete="current-password"
-              />
-            </div>
+            {renderForm()}
 
             <div className="form-actions">
-              <a href="#" className="forgot-password" onClick={(e) => e.preventDefault()}>
+              <button 
+                type="button" 
+                className="forgot-password" 
+                onClick={(e) => e.preventDefault()}
+              >
                 Forgot password?
-              </a>
+              </button>
             </div>
 
             {message && (
@@ -90,12 +162,18 @@ const Login = () => {
             )}
 
             <div className="button-group">
-              <a href="#" className="create-account-link" onClick={(e) => e.preventDefault()}>
-                Create account
-              </a>
+              {loginState === LOGIN_STATE.USERNAME_PASSWORD && (
+                <button 
+                  type="button" 
+                  className="create-account-link" 
+                  onClick={(e) => e.preventDefault()}
+                >
+                  Create account
+                </button>
+              )}
               <button type="submit" className="login-button" disabled={loading}>
                 {loading && <span className="spinner-border"></span>}
-                <span>{loading ? 'Signing in...' : 'Sign in'}</span>
+                <span>{loading ? 'Processing...' : (loginState === LOGIN_STATE.USERNAME_PASSWORD ? 'Sign in' : 'Verify')}</span>
               </button>
             </div>
           </form>

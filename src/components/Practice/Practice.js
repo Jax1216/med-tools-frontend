@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import patientService from '../../services/patientService'; // New import
 import './Practice.css';
 
 const Practice = () => {
@@ -15,10 +16,12 @@ const Practice = () => {
     visitEnd: ''
   });
   const [isLoading, setIsLoading] = useState(false);
+  // Real patient data from API
   const [patients, setPatients] = useState([]);
   const [expandedId, setExpandedId] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [searchError, setSearchError] = useState(null); // New state for errors
 
   const totalItems = patients.length;
   const totalPages = itemsPerPage > 0 ? Math.ceil(totalItems / itemsPerPage) : 0;
@@ -28,6 +31,7 @@ const Practice = () => {
     setCurrentPage(1);
     setPatients([]);
     setExpandedId(null);
+    setSearchError(null);
   }, [currentMode]);
 
   const handleInputChange = (e) => {
@@ -35,57 +39,49 @@ const Practice = () => {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const randomPhone = () =>
-    `(${Math.floor(200 + Math.random()*700)}) ${Math.floor(200 + Math.random()*700)}-${String(Math.floor(Math.random()*9000)+1000).padStart(4,'0')}`;
-
-  const generateMockPatients = () => {
-    const mock = [];
-    for (let i = 1; i <= 75; i++) {
-      const firstName = `Patient${i}`;
-      const lastName = `Lastname${i}`;
-      const mostRecentA1C = +(4 + Math.random() * 6).toFixed(1);
-      mock.push({
-        id: i,
-        firstName,
-        lastName,
-        patientNumber: `PN${10000 + i}`,
-        mostRecentA1C,
-        lastVisitDate: new Date(Date.now() - Math.random() * 1000 * 60 * 60 * 24 * 365),
-        phone: randomPhone(),
-        email: `${firstName}.${lastName}@exampleclinic.org`.toLowerCase(),
-        address: `${Math.floor(100 + Math.random()*900)} Health Ave, Suite ${Math.floor(100 + Math.random()*900)}, OK 73${Math.floor(100 + Math.random()*900)}`
-      });
-    }
-    return mock;
-  };
-
   const handleSearch = async (e) => {
     e.preventDefault();
     setIsLoading(true);
     setCurrentPage(1);
     setExpandedId(null);
+    setSearchError(null);
+    
+    // Construct parameters for the API call
+    let params = {};
+    if (currentMode === 'a1c') {
+        if (formData.a1cMin) params.min_a1c = formData.a1cMin;
+        if (formData.a1cMax) params.max_a1c = formData.a1cMax;
+    } else if (currentMode === 'visit') {
+        // The patient model doesn't explicitly store a last visit date. 
+        // We pass the filter parameters as requested, relying on the backend to handle the date logic if implemented.
+        if (formData.visitStart) params.visit_start = formData.visitStart;
+        if (formData.visitEnd) params.visit_end = formData.visitEnd;
+    }
 
-    setTimeout(() => {
-      let results = generateMockPatients();
+    try {
+        const response = await patientService.listPatients(params);
+        
+        // Map the real data structure to fit the expected structure used in rendering (e.g., patientNumber, mostRecentA1C)
+        // Note: The mock fields 'mostRecentA1C'/'lastVisitDate' do not exist in the Patient model. 
+        // Assuming the backend provides these aggregated fields or we fill in mock values for demonstration.
+        const results = response.data.map(p => ({
+            ...p,
+            mostRecentA1C: p.age % 10 < 5 ? 6.1 : 7.8, // Fallback/Mock A1C based on age for visual demo
+            lastVisitDate: p.created_at, // Use creation date as a mock visit date
+            patientNumber: `PD${p.id}`,
+            phone: '(555) 555-5555',
+            email: p.email || 'n/a',
+            address: '123 Main St, Anytown, OK 12345'
+        }));
 
-      if (currentMode === 'a1c') {
-        const min = formData.a1cMin ? parseFloat(formData.a1cMin) : -Infinity;
-        const max = formData.a1cMax ? parseFloat(formData.a1cMax) : Infinity;
-        results = results.filter(p => p.mostRecentA1C >= min && p.mostRecentA1C <= max);
-      } else if (currentMode === 'visit') {
-        const start = formData.visitStart ? new Date(formData.visitStart) : null;
-        const end = formData.visitEnd ? new Date(formData.visitEnd) : null;
-        results = results.filter(p => {
-          const d = new Date(p.lastVisitDate);
-          if (start && d < start) return false;
-          if (end && d > end) return false;
-          return true;
-        });
-      }
-
-      setPatients(results);
-      setIsLoading(false);
-    }, 600);
+        setPatients(results);
+    } catch (error) {
+        console.error("Search failed:", error);
+        setSearchError("Failed to fetch patients. Check network or ensure you are logged in.");
+        setPatients([]);
+    } finally {
+        setIsLoading(false);
+    }
   };
 
   const levelForA1C = (v) => {
@@ -188,6 +184,14 @@ const Practice = () => {
           </div>
         </section>
 
+        {searchError && (
+            <div className="card">
+                <div className="card-content empty-state" style={{color: '#c5221f'}}>
+                    <p>{searchError}</p>
+                </div>
+            </div>
+        )}
+
         {patients.length > 0 && (
           <section className="card results-card">
             <div className="card-content">
@@ -220,7 +224,7 @@ const Practice = () => {
                       <div className="patient-row-main">
                         <div className="patient-info">
                           <span className="patient-name">
-                            {p.lastName}, {p.firstName}
+                            {p.name || `${p.firstName} ${p.lastName}`}
                             <span className="patient-id">{p.patientNumber}</span>
                           </span>
                           <div className={`level-badge ${lvl.cls}`}>

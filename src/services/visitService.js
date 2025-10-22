@@ -1,31 +1,24 @@
 import axios from 'axios';
 import authHeader from './authHeader';
 
-const API_URL = 'http://localhost:3000/api/v1/visit';
-
-/**
- * Creates a new visit record.
- * @param {Object} visitData - The data for the new visit.
- * @returns {Promise} - The axios promise.
- */
+const API_URL = 'http://localhost:5000/api/visits'; 
 
 const createVisit = (visitData) => {
-  return axios.post(`${API_URL}/create`, visitData, { headers: authHeader() });
+  return axios.post(`${API_URL}/`, visitData, { headers: authHeader() });
 };
 
-/**
- * Gets all visits for a specific patient.
- * @param {string} patientId - The ID of the patient.
- * @returns {Promise} - The axios promise.
- */
-
-const getVisitsByPatient = (patientId) => {
-  return axios.get(`${API_URL}/patient/${patientId}`, { headers: authHeader() });
+const getVisits = (patientId) => {
+  const params = patientId ? { patient_id: patientId } : {};
+  return axios.get(`${API_URL}/`, { 
+    headers: authHeader(), 
+    params: params 
+  });
 };
 
 const visitService = {
   createVisit,
-  getVisitsByPatient,
+  getVisits,
+  getVisitsByPatient: getVisits, 
 };
 
 export default visitService;
